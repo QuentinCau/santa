@@ -17,12 +17,11 @@
         }
 
         h1 {
-            background-color: #ffcc00; /* Jaune doré pour contraste */
-            color: #a80000;
+            background-color: #ffcc00; /* Jaune doré */
+            color: #a80000; /* Rouge vif pour contraste */
             padding: 20px;
             margin: 0;
             font-size: 2.5em;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
         }
 
         h1 span {
@@ -78,41 +77,13 @@
             padding: 20px;
             border: 3px solid #ffcc00;
             border-radius: 15px;
-            background: #00b300;
+            background: #00b300; /* Vert sapin */
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
         }
 
         #resultText {
             font-size: 1.5em;
             color: white;
-        }
-
-        /* Décoration Père Noël */
-        .santa-deco {
-            position: fixed;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 1;
-            pointer-events: none; /* Ignorer les clics */
-        }
-
-        .santa-left {
-            left: 0;
-            animation: floatSanta 3s ease-in-out infinite alternate;
-        }
-
-        .santa-right {
-            right: 0;
-            animation: floatSanta 3s ease-in-out infinite alternate-reverse;
-        }
-
-        @keyframes floatSanta {
-            0% {
-                transform: translateY(-50%) scale(1);
-            }
-            100% {
-                transform: translateY(-55%) scale(1.1);
-            }
         }
 
         /* Animation de neige */
@@ -137,8 +108,8 @@
     </style>
 </head>
 <body>
-    <h1>🎁 Secret Santa <span>🎄</span></h1>
-    <p>Entrez votre nom pour découvrir à qui vous devez offrir un cadeau !</p>
+    <h1>🎁 Le Père Noël surprise du BHD ! <span>🎄</span></h1>
+    <p>Entre ton nom pour découvrir à qui tu vas offrir un magnifique cadeau !</p>
 
     <div id="nameInput">
         <input type="text" id="participantName" placeholder="Entrez votre prénom" />
@@ -146,35 +117,42 @@
     </div>
 
     <div id="resultSection" class="hidden">
-        <h2>✨ Résultat ✨</h2>
+        <h2>✨ ✨ ✨ ✨ ✨ ✨ ✨ ✨</h2>
         <p id="resultText"></p>
+	<h2>✨ ✨ ✨ ✨ ✨ ✨ ✨ ✨</h2>
     </div>
 
     <!-- Conteneur pour les flocons de neige -->
     <div id="snowContainer"></div>
 
     <script>
-        // Liste des participants et leurs assignations (prédéfinie avec majuscules et accents)
-        const participants = ["Nadège", "Salimeh", "Quentin", "Olivier", "Susanne", "Wilfried", "Vanessa", "Marie", "Layla", "Alexis", "Angélique", "Camille", "Audrey", "Louise"];
-        let assignments = [...participants];
+        const participants = ["Nadège", "Salimeh", "Quentin", "Olivier", "Suzanne", "Wilfried", "Marie", "Vanessa", "Layla", "Alexis", "Angélique", "Audrey", "Louise", "Camille"];
 
-        // Fonction pour mélanger la liste et garantir aucune auto-assignation
+        // Fonction pour effectuer un tirage au sort sans erreur
         function shuffleAndAssign() {
-            for (let i = assignments.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [assignments[i], assignments[j]] = [assignments[j], assignments[i]];
+            let assignments = [...participants];
+            let isValid = false;
+
+            while (!isValid) {
+                // Mélanger la liste
+                for (let i = assignments.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [assignments[i], assignments[j]] = [assignments[j], assignments[i]];
+                }
+
+                // Vérifier que personne ne se tire soi-même
+                isValid = participants.every((name, index) => name !== assignments[index]);
             }
 
-            // Vérifier qu'aucun participant ne se tire lui-même
-            for (let i = 0; i < participants.length; i++) {
-                if (participants[i] === assignments[i]) {
-                    return shuffleAndAssign(); // Refaire le tirage si un problème est détecté
-                }
-            }
+            return assignments;
         }
 
-        // Appel initial pour préparer le tirage
-        shuffleAndAssign();
+        // Initialisation du tirage : vérifier dans LocalStorage ou effectuer un tirage
+        let assignments = JSON.parse(localStorage.getItem("secretSantaAssignments"));
+        if (!assignments) {
+            assignments = shuffleAndAssign();
+            localStorage.setItem("secretSantaAssignments", JSON.stringify(assignments));
+        }
 
         // Fonction pour normaliser les noms (supprimer les accents et mettre en minuscules)
         function normalizeName(name) {
@@ -207,7 +185,7 @@
             }
 
             // Afficher le résultat avec les majuscules et accents originaux
-            resultText.textContent = `🎄 Bonjour ${participants[index]}, vous devez offrir un cadeau à ${assignments[index]} ! 🎁`;
+            resultText.textContent = `🎄 ${participants[index]}, la personne qui aura la chance de recevoir ton cadeau est ${assignments[index]} ! 🎁`;
             resultSection.classList.remove("hidden");
         }
 
