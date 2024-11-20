@@ -125,54 +125,74 @@
     <!-- Conteneur pour les flocons de neige -->
     <div id="snowContainer"></div>
 
-    <script>
-        // Configuration Google Sheets
-        const SHEET_ID = "13QGRio8sQIlwteyz9YjlitMy0Pbv-ik94yqTgtmzK64";
-        const API_KEY = "AIzaSyCQBHfpHNlLOepjDNrj2rsq_V6ucRmr9-k"; // Remplacez par votre clé API
-        const SHEET_URL = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Participants!A:B?key=${API_KEY}`;
+<script>
+    // Configuration Google Sheets
+    const SHEET_ID = "13QGRio8sQIlwteyz9YjlitMy0Pbv-ik94yqTgtmzK64";
+    const API_KEY = "AIzaSyCQBHfpHNlLOepjDNrj2rsq_V6ucRmr9-k";
+    const SHEET_URL = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Participants!A2:B?key=${API_KEY}`;
 
-        let assignments = {};
+    let assignments = {};
 
-        // Charger les données depuis Google Sheets
-        async function loadAssignments() {
-            try {
-                const response = await fetch(SHEET_URL);
-                const data = await response.json();
-                const rows = data.values;
+    // Fonction pour normaliser les noms : supprimer les accents et mettre en minuscules
+    function normalizeName(name) {
+        return name
+            .normalize("NFD") // Décompose les accents (e.g., "é" devient "e + accent")
+            .replace(/[\u0300-\u036f]/g, "") // Supprime les accents
+            .toLowerCase(); // Convertit en minuscules
+    }
 
-                // Convertir les données en objet { participant: assignation }
-                assignments = rows.reduce((acc, row) => {
-                    acc[row[0]] = row[1] || null; // Assurez-vous que chaque participant a une assignation
-                    return acc;
-                }, {});
+    // Charger les données depuis Google Sheets
+    async function loadAssignments() {
+        try {
+            const response = await fetch(SHEET_URL);
+            const data = await response.json();
 
-                console.log("Assignations chargées :", assignments);
-            } catch (error) {
-                console.error("Erreur lors du chargement des assignations :", error);
-            }
-        }
-
-        // Révéler le tirage d'un participant
-        async function revealSecretSanta() {
-            const participantName = document.getElementById("participantName").value.trim();
-            if (!participantName) {
-                alert("Veuillez entrer votre prénom !");
+            // Vérifier que les données existent
+            if (!data.values) {
+                console.error("Aucune donnée trouvée dans la feuille !");
                 return;
             }
 
-            const assignedPerson = assignments[participantName];
+            const rows = data.values;
 
-            if (!assignedPerson) {
-                alert("Nom introuvable dans la liste des participants !");
-                return;
-            }
+            // Convertir les données en objet { participant: assignation } avec normalisation
+            assignments = rows.reduce((acc, row) => {
+                const normalizedParticipant = normalizeName(row[0]); // Normaliser le nom du participant
+                const normalizedAssigned = row[1] ? normalizeName(row[1]) : null; // Normaliser l'assignation
+                acc[normalizedParticipant] = normalizedAssigned;
+                return acc;
+            }, {});
 
-            // Afficher le résultat
-            document.getElementById("resultText").textContent = `🎄 Bonjour ${participantName}, vous devez offrir un cadeau à ${assignedPerson} ! 🎁`;
+            console.log("Assignations chargées :", assignments);
+        } catch (error) {
+            console.error("Erreur lors du chargement des assignations :", error);
+        }
+    }
+
+    // Révéler le tirage d'un participant
+    async function revealSecretSanta() {
+        const participantName = document.getElementById("participantName").value.trim();
+
+        if (!participantName) {
+            alert("Veuillez entrer votre prénom !");
+            return;
         }
 
-        // Charger les assignations au démarrage
-        loadAssignments();
-    </script>
+        const normalizedInput = normalizeName(participantName); // Normaliser l'entrée utilisateur
+        const assignedPerson = assignments[normalizedInput]; // Rechercher dans les assignations normalisées
+
+        if (!assignedPerson) {
+            alert("Nom introuvable dans la liste des participants !");
+            return;
+        }
+
+        // Afficher le résultat
+        document.getElementById("resultText").textContent = `🎄 Bonjour ${participantName}, vous devez offrir un cadeau à ${assignedPerson} ! 🎁`;
+    }
+
+    // Charger les assignations au démarrage
+    loadAssignments();
+</script>
+
 </body>
 </html>
