@@ -126,12 +126,12 @@
     <div id="snowContainer"></div>
 
 <script>
-    // Configuration Google Sheets
+ // Configuration Google Sheets
     const SHEET_ID = "13QGRio8sQIlwteyz9YjlitMy0Pbv-ik94yqTgtmzK64";
     const API_KEY = "AIzaSyCQBHfpHNlLOepjDNrj2rsq_V6ucRmr9-k";
     const SHEET_URL = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Participants!A2:B?key=${API_KEY}`;
 
-    let assignments = {};
+    let assignments = {}; // Stockera { normalizedName: { originalName, assignedName } }
 
     // Fonction pour normaliser les noms : supprimer les accents et mettre en minuscules
     function normalizeName(name) {
@@ -155,11 +155,13 @@
 
             const rows = data.values;
 
-            // Convertir les données en objet { participant: assignation } avec normalisation
+            // Convertir les données en objet { normalizedName: { originalName, assignedName } }
             assignments = rows.reduce((acc, row) => {
-                const normalizedParticipant = normalizeName(row[0]); // Normaliser le nom du participant
-                const normalizedAssigned = row[1] ? normalizeName(row[1]) : null; // Normaliser l'assignation
-                acc[normalizedParticipant] = normalizedAssigned;
+                const normalizedParticipant = normalizeName(row[0]); // Nom normalisé
+                acc[normalizedParticipant] = {
+                    originalName: row[0], // Nom original du participant
+                    assignedName: row[1] // Nom original de l'assignation
+                };
                 return acc;
             }, {});
 
@@ -179,19 +181,40 @@
         }
 
         const normalizedInput = normalizeName(participantName); // Normaliser l'entrée utilisateur
-        const assignedPerson = assignments[normalizedInput]; // Rechercher dans les assignations normalisées
+        const participantData = assignments[normalizedInput]; // Rechercher dans les assignations normalisées
 
-        if (!assignedPerson) {
+        if (!participantData) {
             alert("Nom introuvable dans la liste des participants !");
             return;
         }
 
-        // Afficher le résultat
-        document.getElementById("resultText").textContent = `🎄 Bonjour ${participantName}, vous devez offrir un cadeau à ${assignedPerson} ! 🎁`;
+        const originalName = participantData.originalName;
+        const assignedName = participantData.assignedName;
+
+        // Afficher le résultat avec les noms originaux
+        document.getElementById("resultText").textContent = `🎄 Bonjour ${originalName}, vous devez offrir un cadeau à ${assignedName} ! 🎁`;
     }
 
     // Charger les assignations au démarrage
     loadAssignments();
+	
+	// Fonction pour générer les flocons de neige
+        function generateSnowflakes() {
+            const snowContainer = document.getElementById("snowContainer");
+            const numberOfFlakes = 50;
+
+            for (let i = 0; i < numberOfFlakes; i++) {
+                const flake = document.createElement("div");
+                flake.classList.add("snowflake");
+                flake.textContent = "❄";
+                flake.style.left = Math.random() * 100 + "vw";
+                flake.style.animationDuration = Math.random() * 3 + 2 + "s";
+                flake.style.fontSize = Math.random() * 10 + 10 + "px";
+                snowContainer.appendChild(flake);
+            }
+        }
+
+        generateSnowflakes();
 </script>
 
 </body>
